@@ -7,10 +7,22 @@
     direction="rtl"
     size="400px"
   >
+    <!-- 主容器与表单（settings-container 与 el-form） -->
     <div class="settings-container">
       <!-- 使用element-plus的表单组件来展示和编辑设置 -->
+      <!-- 
+        el-form：Element Plus 的表单组件，用于统一管理设置项：
+        :model="settings"：绑定响应式数据对象 settings，实现表单数据的双向绑定。
+        label-width="120px"：固定标签宽度，使所有设置项的标签对齐，视觉更规整。 
+      -->
       <el-form :model="settings" label-width="120px">
         <!-- 主题模式选择 -->
+         <!-- 
+          交互：
+            v-model="settings.themeMode"：绑定主题模式值（与 Pinia 存储同步）。
+            @change="handleThemeModeChange"：选择变化时触发主题更新逻辑。
+            class="w-full"：选择器占满父容器宽度，布局更紧凑。 
+        -->
         <el-form-item label="主题模式">
           <el-select v-model="settings.themeMode" @change="handleThemeModeChange" class="w-full">
             <el-option label="跟随系统" value="system" />
@@ -80,6 +92,7 @@
         </el-form-item>
 
         <!-- Top P -->
+         <!-- 控制 AI 生成文本时的词汇采样范围（值越高，采样范围越广）。 -->
         <el-form-item label="Top P">
           <el-slider
             v-model="settings.topP"
@@ -91,6 +104,7 @@
         </el-form-item>
 
         <!-- Top K -->
+         <!-- 控制 AI 生成文本时每次选择的候选词数量（值越高，候选词越多）。 -->
         <el-form-item label="Top K">
           <el-input-number
             v-model="settings.topK"
@@ -101,6 +115,7 @@
         </el-form-item>
 
         <!-- 图片细节控制（仅VLM模型显示） -->
+         <!-- 高分辨率识别更精准但消耗更多 Token，低分辨率则相反，自动模式由模型决定。 -->
         <el-form-item label="图片细节" v-if="isVLMModel">
           <el-select v-model="settings.imageDetail" class="w-full">
             <el-option label="高分辨率 (high)" value="high" />
@@ -120,9 +135,13 @@
 </template>
 
 <script setup>
+// Vue 核心 API：导入 ref（响应式基础类型）、reactive（响应式对象）、computed（计算属性）用于构建响应式数据。
+// 状态管理：导入 useSettingsStore（Pinia 存储实例）和 modelOptions（模型列表），用于获取和修改全局设置。
+// UI 组件：导入 ElMessage 用于显示操作成功 / 失败的提示信息。
 import { ref, reactive, computed } from 'vue'
 import { useSettingsStore, modelOptions } from '../stores/settings'
 import { ElMessage } from 'element-plus'
+
 
 // 定义组件的props
 const props = defineProps({
@@ -158,6 +177,7 @@ const settings = reactive({
 // 计算属性：判断当前模型是否为VLM模型
 const isVLMModel = computed(() => {
   const currentModel = modelOptions.find(option => option.value === settings.model)
+  // 检查该模型是否包含 isVLM: true 属性（如 Qwen2.5-VL-7B），返回布尔值。
   return currentModel?.isVLM || false
 })
 
@@ -189,25 +209,25 @@ const handleSave = () => {
   padding: 1rem;
   height: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: column;// 子元素垂直排列（从上到下）
 }
 
 // 保存按钮布局
 .settings-footer {
-  margin-top: auto;
+  margin-top: auto;// 自动占据上方剩余空间，将按钮推至底部
   padding-top: 1rem;
   text-align: right;
 }
 
 // 全宽样式，用于表单项
 .w-full {
-  width: 100%;
+  width: 100%;// 宽度占满父容器
 }
 
 // 表单项提示样式
 .form-item-tip {
   font-size: 12px;
   color: #909399;
-  margin-top: 4px;
+  margin-top: 4px;// 与上方表单项保持小间距
 }
 </style>

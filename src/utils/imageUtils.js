@@ -37,7 +37,7 @@ export const convertImageToWebPBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const img = new Image()
     const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d')//获取canvas的 2D 绘图上下文，以便在canvas上进行绘图操作。
     
     img.onload = () => {
       // 设置canvas尺寸
@@ -48,7 +48,8 @@ export const convertImageToWebPBase64 = (file) => {
       ctx.drawImage(img, 0, 0)
       
       // 转换为WebP格式的base64
-      const webpDataUrl = canvas.toDataURL('image/webp', 0.8)
+      const webpDataUrl = canvas.toDataURL('image/webp', 0.8)//使用canvas的toDataURL方法将绘制在canvas上的图片转换为 WebP 格式的 Data URL，第二个参数0.8表示图片质量。
+
       const base64 = webpDataUrl.split(',')[1]
       resolve(base64)
     }
@@ -145,5 +146,5 @@ export const getImagePreviewUrl = (file) => {
  * @param {string} url - 预览URL
  */
 export const revokeImagePreviewUrl = (url) => {
-  URL.revokeObjectURL(url)
+  URL.revokeObjectURL(url)//该方法用于释放通过URL.createObjectURL创建的对象 URL 所占用的内存，传入的url参数就是要释放内存的对象 URL。
 }
