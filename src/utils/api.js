@@ -20,7 +20,7 @@ export const chatApi = {
             messages,// 对话历史消息数组（包含角色和内容）
             temperature: settingsStore.temperature,
             max_tokens: settingsStore.maxTokens,
-            stream,// 是否启用流式响应（打字机效果）
+            stream:settingsStore.streamResponse,// 是否启用流式响应（打字机效果）
             top_p: settingsStore.topP,
             top_k: settingsStore.topK,
         }
