@@ -105,11 +105,11 @@ export const buildVLMMessage = async (textContent, imageFiles = [], detail = 'hi
     }
     
     try {
-      const base64 = await convertImageToBase64(file)
+      const base64 = await convertImageToWebPBase64(file)
       content.push({
         type: 'image_url',
         image_url: {
-          url: `data:${file.type};base64,${base64}`,
+          url: `data:image/webp;base64,${base64}`,
           detail: detail
         }
       })
