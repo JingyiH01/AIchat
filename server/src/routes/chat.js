@@ -17,6 +17,34 @@ const ALLOWED_MODELS = new Set([
   'Qwen/Qwen3-Omni-30B-A3B-Instruct',     // ✅ VLM 图像+音频
 ])
 
+// 支持图片输入的模型（VLM）
+const VLM_MODELS = new Set([
+  'Qwen/Qwen3-VL-32B-Instruct',
+  'zai-org/GLM-4.5V',
+  'Qwen/Qwen3-Omni-30B-A3B-Instruct',
+])
+
+// 清洗消息：非 VLM 模型收到带图片的消息时，剥掉图片只留文本
+// 解决：切换模型后历史里残留的图片消息，导致文本模型 400
+// 面试考点：服务端对输入做健壮性兜底，防止前端状态残留导致上游报错
+function sanitizeMessages(messages, model) {
+  const isVLM = VLM_MODELS.has(model)
+  return messages.map((msg) => {
+    // 消息内容是数组（OpenAI 多模态格式：[{type:'image_url'}, {type:'text'}]）
+    if (Array.isArray(msg.content)) {
+      // 非 VLM 模型：只保留 text 项
+      if (!isVLM) {
+        const textParts = msg.content
+          .filter((part) => part.type === 'text')
+          .map((part) => part.text)
+        return { ...msg, content: textParts.join('\n') }
+      }
+      return msg // VLM 模型保留完整多模态内容
+    }
+    return msg // 普通字符串消息原样返回
+  })
+}
+
 // POST /api/chat  前端把对话发过来，后端代理给 SiliconFlow
 router.post('/', async (req, res) => {
   const { messages, model, stream = false, ...params } = req.body
@@ -29,13 +57,16 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ code: 400, msg: `不支持的模型: ${model}` })
   }
 
+  // 清洗消息：非 VLM 模型剥掉图片，防止历史残留图片消息导致 400
+  const cleanMessages = sanitizeMessages(messages, model)
+
   // 注入 system prompt：锚定模型身份，防止被历史对话里旧模型的角色自述带偏
   // 面试考点：system prompt 是最高优先级指令，用来固定模型人设、行为边界
   const systemPrompt = {
     role: 'system',
     content: `你是 ${model} 模型，请以该身份诚实、准确地回答用户问题。不要模仿或延续对话历史中其他 AI 助手的角色自述。`,
   }
-  const payload = { messages: [systemPrompt, ...messages], model, ...params }
+  const payload = { messages: [systemPrompt, ...cleanMessages], model, ...params }
 
   // ---- 流式分支：SSE 透传 ----
   if (stream) {
