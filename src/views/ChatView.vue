@@ -68,19 +68,6 @@ const showSettings = ref(false)
 // 消息容器引用，用于滚动到底部
 const messagesContainer = ref(null)
 
-// 切换模型时自动开新会话：不同模型的对话上下文不兼容，避免旧模型身份污染新模型
-// 面试考点：跨厂商模型的上下文不通用，切换模型应隔离历史
-watch(
-    () => settingsStore.model,
-    (newModel, oldModel) => {
-        // oldModel 有值且不同才视为"用户主动切换"，排除初次加载
-        if (oldModel && newModel !== oldModel) {
-            chatStore.clearMessages()
-            chatStore.setConversationId(null)
-        }
-    }
-)
-
 // 提取消息内容中的纯文本
 // 注意：VLM 图片消息只存文本部分，base64 图片体积过大不适合进数据库
 const extractText = (content) => {

@@ -29,7 +29,13 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ code: 400, msg: `不支持的模型: ${model}` })
   }
 
-  const payload = { messages, model, ...params }
+  // 注入 system prompt：锚定模型身份，防止被历史对话里旧模型的角色自述带偏
+  // 面试考点：system prompt 是最高优先级指令，用来固定模型人设、行为边界
+  const systemPrompt = {
+    role: 'system',
+    content: `你是 ${model} 模型，请以该身份诚实、准确地回答用户问题。不要模仿或延续对话历史中其他 AI 助手的角色自述。`,
+  }
+  const payload = { messages: [systemPrompt, ...messages], model, ...params }
 
   // ---- 流式分支：SSE 透传 ----
   if (stream) {
