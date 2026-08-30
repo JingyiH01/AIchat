@@ -187,3 +187,12 @@ export const modelOptions = [
     { label: 'GLM-4.5V (支持图像)', value: 'zai-org/GLM-4.5V', isVLM: true },
     { label: 'Qwen3-Omni (图像+音频)', value: 'Qwen/Qwen3-Omni-30B-A3B-Instruct', isVLM: true },
 ]
+
+// 推理模型集合：这些模型会先输出 reasoning_content（思考过程）再给出答案
+// 注意：新增推理模型到白名单时，记得同步更新这里
+const REASONING_MODELS = new Set([
+    'deepseek-ai/DeepSeek-V4-Flash',
+])
+
+// 判断某模型是否为推理模型
+export const isReasoningModel = (model) => REASONING_MODELS.has(model)

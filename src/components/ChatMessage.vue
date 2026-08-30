@@ -167,7 +167,7 @@
 // 导入Pinia状态管理的聊天存储
 //   导入聊天相关的状态管理 store。用于获取和操作全局的聊天状态（如消息列表、加载状态等）
 import { computed, ref, nextTick } from 'vue'
-import { useSettingsStore } from '../stores/settings'
+import { useSettingsStore, isReasoningModel } from '../stores/settings'
 import { renderMarkdown } from '../utils/markdown'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, RefreshRight, CopyDocument } from '@element-plus/icons-vue'
@@ -197,9 +197,9 @@ const props = defineProps({
 // 推理模型（如 DeepSeek-V4-Flash）会先"思考"，提示"正在推理"并说明原因；普通模型提示"正在生成"
 const settingsStore = useSettingsStore()
 const loadingText = computed(() => {
-    const model = settingsStore.model || ''
-    const isReasoningModel = model.includes('DeepSeek-V4-Flash') || model.includes('R1')
-    return isReasoningModel ? '正在推理中 · 此模型会先思考再作答' : '正在生成'
+    return isReasoningModel(settingsStore.model)
+        ? '正在推理中 · 此模型会先思考再作答'
+        : '正在生成'
 })
 
 // 定义自定义事件（defineEmits）
