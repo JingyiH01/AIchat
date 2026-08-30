@@ -36,10 +36,10 @@ app.get('/api/health', (req, res) => {
   res.json({ code: 0, msg: 'ok', data: { time: Date.now() } })
 })
 
-// 鉴权分级：登录接口开放；AI 对话接口 限流 + 鉴权；会话接口暂开放（D4 加鉴权）
-app.use('/api/auth', authRouter) // 登录
+// 鉴权分级：登录接口开放；其余接口全部需要 JWT
+app.use('/api/auth', authRouter) // 登录（唯一开放接口）
 app.use('/api/chat', authMiddleware, rateLimiter, chatRouter) // AI 对话代理（先鉴权再限流）
-app.use('/api/conversations', conversationRouter) // 会话持久化
+app.use('/api/conversations', authMiddleware, conversationRouter) // 会话持久化
 
 // ===== 404 兜底 =====
 app.use((req, res) => {
