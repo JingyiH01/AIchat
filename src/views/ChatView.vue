@@ -129,8 +129,15 @@ const handleSend = async (content) => {
         // 构建消息数组，处理VLM格式
         const messagesToSend = []
         
-        // 处理历史消息
-        for (let i = 0; i < messages.value.length - 1; i++) {
+        // 当前消息是否含图片（VLM）
+        const isVLMContent = typeof content === 'object' && content.images && content.images.length > 0
+
+        // VLM 传图时用干净上下文：只发当前这条图文消息，忽略历史
+        // 原因：① 避免历史里的 VLM user 消息与当前形成连续 user（报错）
+        //      ② 图片 token 开销大，带历史会撑爆上下文上限
+        if (!isVLMContent) {
+          // 处理历史消息
+          for (let i = 0; i < messages.value.length - 1; i++) {
             const msg = messages.value[i]
             if (msg.role === 'user' && typeof msg.content === 'object' && msg.content.text !== undefined) {
                 // 这是一个VLM格式的消息，需要重构为API格式
@@ -138,7 +145,7 @@ const handleSend = async (content) => {
                     role: 'user',
                     content: []
                 }
-                
+
                 // 添加图片
                 if (msg.content.images && msg.content.images.length > 0) {
                     msg.content.images.forEach(imageUrl => {
@@ -151,7 +158,7 @@ const handleSend = async (content) => {
                         })
                     })
                 }
-                
+
                 // 添加文本
                 if (msg.content.text) {
                     apiMessage.content.push({
@@ -159,7 +166,7 @@ const handleSend = async (content) => {
                         text: msg.content.text
                     })
                 }
-                
+
                 messagesToSend.push(apiMessage)
             } else {
                 // 传统格式消息
@@ -168,6 +175,7 @@ const handleSend = async (content) => {
                     content: msg.content
                 })
             }
+          }
         }
         
         // 添加当前用户消息
