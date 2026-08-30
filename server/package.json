@@ -1,0 +1,20 @@
+{
+  "name": "ai-chat-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Chat BFF 服务：代理 SiliconFlow API、SSE 流式转发、会话持久化",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.2"
+  }
+}

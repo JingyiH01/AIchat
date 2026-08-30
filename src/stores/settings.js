@@ -13,8 +13,8 @@ export const useSettingsStore = defineStore('settings', {
         temperature: 0.7,
         // 最大 token 数量，默认值为 1000
         maxTokens: 1000,
-        // 使用的模型名称，默认为 'THUDM/glm-4-9b-chat'
-        model: 'THUDM/glm-4-9b-chat',
+        // 使用的模型名称，默认为 'deepseek-ai/DeepSeek-V4-Flash'（免费可用）
+        model: 'deepseek-ai/DeepSeek-V4-Flash',
         // API 密钥，默认为空字符串
         apiKey: '',
         // 是否启用流式响应，默认为 true
@@ -123,12 +123,14 @@ export const useSettingsStore = defineStore('settings', {
 
 // 导出模型选项供其他组件使用
 export const modelOptions = [
-    { label: 'GLM-4-9B', value: 'THUDM/glm-4-9b-chat' },
-    { label: 'Qwen2.5-7B', value: 'Qwen/Qwen2.5-7B-Instruct' },
-    { label: 'Qwen2.5-Coder-7B', value: 'Qwen/Qwen2.5-Coder-7B-Instruct' },
-    { label: 'Meta-Llama-3.1-8B', value: 'meta-llama/Meta-Llama-3.1-8B-Instruct' },
-    // { label: 'Gemma-2-9B', value: 'google/gemma-2-9b-it' },  //不知道为什么用不了
-    { label: 'DeepSeek-V2.5', value: 'deepseek-ai/DeepSeek-V2.5' },
-    // VLM 模型
-    { label: 'Qwen2.5-VL-7B (支持图像)', value: 'Pro/Qwen/Qwen2.5-VL-7B-Instruct', isVLM: true },
+    // 文本模型（免费）
+    { label: 'DeepSeek-V4-Flash (免费)', value: 'deepseek-ai/DeepSeek-V4-Flash' },
+    { label: 'Qwen2.5-7B (免费)', value: 'Qwen/Qwen2.5-7B-Instruct' },
+    // 文本模型（需充值）
+    { label: 'DeepSeek-V3.2', value: 'deepseek-ai/DeepSeek-V3.2' },
+    { label: 'Qwen3.5-35B-A3B', value: 'Qwen/Qwen3.5-35B-A3B' },
+    // VLM 图片模型
+    { label: 'Qwen3-VL-32B (支持图像)', value: 'Qwen/Qwen3-VL-32B-Instruct', isVLM: true },
+    { label: 'GLM-4.5V (支持图像)', value: 'zai-org/GLM-4.5V', isVLM: true },
+    { label: 'Qwen3-Omni (图像+音频)', value: 'Qwen/Qwen3-Omni-30B-A3B-Instruct', isVLM: true },
 ]
