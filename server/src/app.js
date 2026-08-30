@@ -2,6 +2,7 @@
 import express from 'express'
 import cors from 'cors'
 import chatRouter from './routes/chat.js'
+import conversationRouter from './routes/conversation.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const app = express()
@@ -26,6 +27,7 @@ app.get('/api/health', (req, res) => {
 })
 
 app.use('/api/chat', chatRouter) // AI 对话代理
+app.use('/api/conversations', conversationRouter) // 会话持久化
 
 // ===== 404 兜底 =====
 app.use((req, res) => {
