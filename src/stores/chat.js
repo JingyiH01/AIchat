@@ -29,6 +29,8 @@ export const useChatStore = defineStore('chat', {
     state: () => ({
         messages: [],
         isLoading: false,
+        // 当前会话在 MySQL 中的 id（null 表示还没创建过会话）
+        conversationId: null,
         tokenCount: {
             total: 0,
             prompt: 0,
@@ -63,6 +65,16 @@ export const useChatStore = defineStore('chat', {
           this.tokenCount.prompt += usage.prompt_tokens
           this.tokenCount.completion += usage.completion_tokens
           this.tokenCount.total += usage.total_tokens
+      },
+
+      //设置当前会话的 MySQL id
+      setConversationId(id) {
+          this.conversationId = id
+      },
+
+      //用数据库里的消息整体替换当前消息列表（刷新页面时恢复历史）
+      restoreMessages(messages) {
+          this.messages = messages
       },
 
       //功能：清空所有对话消息（如用户点击“清空对话”按钮时调用）

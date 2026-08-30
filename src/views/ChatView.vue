@@ -42,10 +42,11 @@
 // 图标与组件：导入 Setting 图标和三个核心组件（ChatMessage 消息项、ChatInput 输入框、SettingsPanel 设置面板）。
 // 状态管理：导入 useChatStore（聊天状态，如消息列表、加载状态）和 useSettingsStore（应用设置，如模型参数、主题）。
 // 工具与 API：导入 chatApi（接口请求工具）和 messageHandler（消息格式化 / 处理工具）。
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { Setting } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
 import { chatApi } from '../utils/api'
+import { createConversation, addMessage, getConversations, getConversationDetail } from '../api/chat'
 import { messageHandler } from '../utils/messageHandler'
 import ChatMessage from '../components/ChatMessage.vue'
 import ChatInput from '../components/ChatInput.vue'
@@ -65,6 +66,27 @@ const isLoading = computed(() => chatStore.isLoading)
 const showSettings = ref(false)
 // 消息容器引用，用于滚动到底部
 const messagesContainer = ref(null)
+
+// 提取消息内容中的纯文本
+// 注意：VLM 图片消息只存文本部分，base64 图片体积过大不适合进数据库
+const extractText = (content) => {
+    if (typeof content === 'string') return content
+    if (content && typeof content === 'object' && content.text) return content.text
+    return ''
+}
+
+// 把用户消息持久化到 MySQL：首次发送自动创建会话，之后追加到当前会话
+const persistUserMessage = async (content) => {
+    const text = extractText(content)
+    if (!text) return
+    if (!chatStore.conversationId) {
+        const title = text.slice(0, 20) || '新对话'
+        const { id } = await createConversation(title, { role: 'user', content: text })
+        chatStore.setConversationId(id)
+    } else {
+        await addMessage(chatStore.conversationId, 'user', text)
+    }
+}
 
 // 监听消息变化，滚动到底部
 // 功能：当消息列表（messages）发生变化时，自动将消息容器滚动到底部（最新消息可见）。
@@ -157,7 +179,10 @@ const handleSend = async (content) => {
         }
         
         console.log('发送给API的消息:', messagesToSend)
-        
+
+        // 持久化：把用户消息存到 MySQL（失败不阻塞对话）
+        persistUserMessage(content).catch(e => console.warn('保存用户消息失败:', e.message))
+
         const response = await chatApi.sendMessage(
             messagesToSend,
             settingsStore.streamResponse
@@ -179,6 +204,13 @@ const handleSend = async (content) => {
                 chatStore.updateTokenCount(result.usage)
             }
         }
+
+        // 持久化：AI 回复完成后，把最后一条助手消息也存库
+        const lastMsg = chatStore.messages[chatStore.messages.length - 1]
+        if (chatStore.conversationId && lastMsg?.role === 'assistant') {
+            addMessage(chatStore.conversationId, 'assistant', extractText(lastMsg.content))
+                .catch(e => console.warn('保存助手消息失败:', e.message))
+        }
     } catch (error) {
         chatStore.updateLastMessage('抱歉，发生了错误，请稍后重试。')
     } finally {
@@ -192,6 +224,29 @@ const handleSend = async (content) => {
 const handleClear = () => {
     chatStore.clearMessages()
 }
+
+// 页面加载时：从数据库恢复最近一次会话的历史（后端没启动则静默，继续用本地历史）
+onMounted(async () => {
+    try {
+        const conversations = await getConversations()
+        if (conversations.length > 0) {
+            const detail = await getConversationDetail(conversations[0].id)
+            if (detail && detail.messages.length > 0) {
+                chatStore.setConversationId(detail.id)
+                chatStore.restoreMessages(detail.messages.map(m => ({
+                    id: m.id,
+                    role: m.role,
+                    content: m.content,
+                    hasImage: false,
+                    loading: false,
+                    timestamp: m.created_at,
+                })))
+            }
+        }
+    } catch (e) {
+        console.warn('后端未启动，继续使用本地历史:', e.message)
+    }
+})
 
 // 处理消息更新
 const handleMessageUpdate = async (updatedMessage) => {
