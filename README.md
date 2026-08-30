@@ -54,6 +54,7 @@ AI Chat 是一款对标主流智能助手（ChatGPT/Claude）的现代化对话�
 ### 安装依赖
 
 ```bash
-git clone [https://github.com/wjc7jx/AIchat.git](https://github.com/wjc7jx/AIchat.git)
+git clone https://github.com/JingyiH01/AIchat.git
 cd AIchat
 npm install
+npm run dev
