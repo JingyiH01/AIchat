@@ -213,7 +213,9 @@ const handleSend = async (content) => {
                 .catch(e => console.warn('保存助手消息失败:', e.message))
         }
     } catch (error) {
-        chatStore.updateLastMessage('抱歉，发生了错误，请稍后重试。')
+        // 显示真实错误信息，方便排查（而不是吞掉错误显示笼统提示）
+        chatStore.updateLastMessage(error?.message || '抱歉，发生了错误，请稍后重试。')
+        console.error('发送消息失败:', error)
     } finally {
         chatStore.isLoading = false
     }
