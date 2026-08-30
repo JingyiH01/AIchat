@@ -118,7 +118,8 @@ const handleSend = async (content) => {
     // 调用 chatStore.addMessage 添加两条消息：用户消息（内容为 content）和一个空的 AI 回复（占位，等待后续更新）。
     // 设置 chatStore.isLoading = true，触发加载状态（输入框禁用、显示加载动画）。
     chatStore.addMessage(messageHandler.formatMessage('user', content))
-    chatStore.addMessage(messageHandler.formatMessage('assistant', ''))
+    // assistant 空消息 loading:true → 立即显示动态加载动画，不等模型首 token
+    chatStore.addMessage({ ...messageHandler.formatMessage('assistant', ''), loading: true })
     chatStore.isLoading = true
 
     try {

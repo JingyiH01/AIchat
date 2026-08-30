@@ -74,14 +74,11 @@ export const messageHandler = {
                         try {
                             const jsData = JSON.parse(jsonStr);// 将 JSON 字符串转为 JavaScript 对象
                             const delta = jsData.choices[0].delta;
-                            // 推理模型（如 DeepSeek-V4-Flash）会先输出 reasoning_content（思考过程）
-                            // 在答案出现前，显示"正在思考…"占位，避免界面空白等待
+                            // 只累加可见答案 content；推理模型的 reasoning_content 由 loading 动画兜底，不污染内容
                             if (delta.content) {
                 //3.4 提取出对象中content内容，更新message
                                 fullResponse += delta.content;
                                 updateMessage(fullResponse);// 调用回调更新界面显示
-                            } else if (delta.reasoning_content && !fullResponse) {
-                                updateMessage('正在思考…');
                             }
 
                             // 3.5更新token使用量

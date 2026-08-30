@@ -51,10 +51,11 @@ export const useChatStore = defineStore('chat', {
       //功能：更新最新一条消息的内容（主要用于AI流式响应的场景）
       //场景：当AI以流的形式返回内容时（如逐字生成回复），可以多次调用该方法更新最后一条消息（AI的回复），实现“打字机”的效果
       //响应式联动：由于Pinia的state是响应式的，lastMessage.content变化后，使用该状态的组件（如ChatMessage.vue）会自动重新渲染，界面上就能看到消息内容“逐步变长”
-      updateLastMessage(content) {
+      updateLastMessage(content, loading = false) {
           if (this.messages.length > 0) {
               const lastMessage = this.messages[this.messages.length - 1] //获取最后一条消息（通常是AI刚创建的“空占位消息”）
               lastMessage.content = content //将content（AI实时返回的部分回复）赋值给最后一条消息的content字段
+              lastMessage.loading = loading // 流结束后关闭加载动画
           }
       },
 
