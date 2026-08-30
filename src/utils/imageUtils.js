@@ -38,26 +38,36 @@ export const convertImageToWebPBase64 = (file) => {
     const img = new Image()
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')//获取canvas的 2D 绘图上下文，以便在canvas上进行绘图操作。
-    
+
     img.onload = () => {
-      // 设置canvas尺寸
-      canvas.width = img.width
-      canvas.height = img.height
-      
+      // 压缩图片：限制最长边为 1024px，减小 base64 体积
+      // 面试考点：VLM 传大图会导致请求超时/回答中断，需在客户端先压缩
+      const MAX_SIDE = 1024
+      let { width, height } = img
+      if (Math.max(width, height) > MAX_SIDE) {
+        const scale = MAX_SIDE / Math.max(width, height)
+        width = Math.round(width * scale)
+        height = Math.round(height * scale)
+      }
+
+      // 设置canvas尺寸（压缩后）
+      canvas.width = width
+      canvas.height = height
+
       // 绘制图片到canvas
-      ctx.drawImage(img, 0, 0)
-      
+      ctx.drawImage(img, 0, 0, width, height)
+
       // 转换为WebP格式的base64
       const webpDataUrl = canvas.toDataURL('image/webp', 0.8)//使用canvas的toDataURL方法将绘制在canvas上的图片转换为 WebP 格式的 Data URL，第二个参数0.8表示图片质量。
 
       const base64 = webpDataUrl.split(',')[1]
       resolve(base64)
     }
-    
+
     img.onerror = () => {
       reject(new Error('图片加载失败'))
     }
-    
+
     // 创建图片URL
     img.src = URL.createObjectURL(file)
   })
