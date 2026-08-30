@@ -85,8 +85,13 @@
         <Loading />：Element Plus 内置的 “加载” 图标组件，视觉上是一个旋转的圆圈，直观表示 “正在处理中”。
         -->
       <div class="message-loading" v-if="loading">
-        <el-icon class="is-loading"><Loading /></el-icon>
-        正在思考...
+        <!-- 动态三点加载动画：提示"模型正在生成/推理"而非空白等待 -->
+        <span class="loading-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </span>
+        <span class="loading-text">{{ loadingText }}</span>
       </div>
 
       <!-- 消息底部区域：时间和操作按钮 -->
@@ -162,6 +167,7 @@
 // 导入Pinia状态管理的聊天存储
 //   导入聊天相关的状态管理 store。用于获取和操作全局的聊天状态（如消息列表、加载状态等）
 import { computed, ref, nextTick } from 'vue'
+import { useSettingsStore } from '../stores/settings'
 import { renderMarkdown } from '../utils/markdown'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Edit, Delete, RefreshRight, CopyDocument } from '@element-plus/icons-vue'
@@ -185,6 +191,15 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
+})
+
+// 加载提示文案：根据当前模型是否推理模型，显示不同提示
+// 推理模型（如 DeepSeek-V4-Flash）会先"思考"，提示"正在推理"；普通模型提示"正在生成"
+const settingsStore = useSettingsStore()
+const loadingText = computed(() => {
+    const model = settingsStore.model || ''
+    const isReasoningModel = model.includes('DeepSeek-V4-Flash') || model.includes('R1')
+    return isReasoningModel ? '正在推理中' : '正在生成'
 })
 
 // 定义自定义事件（defineEmits）
@@ -702,12 +717,36 @@ const handleCopyAll = async () => {
 .message-loading {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   color: var(--text-color-secondary);
-  
-  .el-icon { // Element Plus 的加载图标
-    font-size: 1.2rem;// 图标大小
+  font-size: 0.9rem;
+
+  // 动态三点呼吸动画：让用户感知"模型在工作"而非卡住
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--text-color-secondary, #909399);
+      animation: dot-breathe 1.2s ease-in-out infinite;
+
+      // 三个点依次延迟，形成波浪
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
+    }
   }
+
+  .loading-text {
+    opacity: 0.8;
+  }
+}
+
+@keyframes dot-breathe {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50%      { transform: scale(1.2); opacity: 1; }
 }
 
 .message-meta {
