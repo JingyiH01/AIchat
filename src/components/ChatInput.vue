@@ -20,7 +20,8 @@
             </template>
           </el-alert>
         </div>
-        
+        <!-- 在 el-upload 组件中，:accept 属性用于限制文件选择器可选择的文件类型，
+        其值是一个或多个 MIME 类型字符串或文件扩展名，多个值之间用逗号分隔。 -->
         <el-upload
           class="upload-component"
           :action="null"
