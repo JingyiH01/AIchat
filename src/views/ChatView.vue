@@ -55,6 +55,7 @@ import { useSettingsStore } from '../stores/settings'
 
 // 初始化聊天存储
 const chatStore = useChatStore()
+const settingsStore = useSettingsStore()
 // 计算属性，获取消息列表和加载状态
     // messages：实时获取 chatStore 中的消息列表（响应式同步）。
     // isLoading：实时获取当前是否处于加载状态（控制按钮禁用 / 加载动画）。
@@ -66,6 +67,19 @@ const isLoading = computed(() => chatStore.isLoading)
 const showSettings = ref(false)
 // 消息容器引用，用于滚动到底部
 const messagesContainer = ref(null)
+
+// 切换模型时自动开新会话：不同模型的对话上下文不兼容，避免旧模型身份污染新模型
+// 面试考点：跨厂商模型的上下文不通用，切换模型应隔离历史
+watch(
+    () => settingsStore.model,
+    (newModel, oldModel) => {
+        // oldModel 有值且不同才视为"用户主动切换"，排除初次加载
+        if (oldModel && newModel !== oldModel) {
+            chatStore.clearMessages()
+            chatStore.setConversationId(null)
+        }
+    }
+)
 
 // 提取消息内容中的纯文本
 // 注意：VLM 图片消息只存文本部分，base64 图片体积过大不适合进数据库
@@ -223,6 +237,7 @@ const handleSend = async (content) => {
  */
 const handleClear = () => {
     chatStore.clearMessages()
+    chatStore.setConversationId(null) // 清空后开新会话，而不是继续追加旧会话
 }
 
 // 页面加载时：从数据库恢复最近一次会话的历史（后端没启动则静默，继续用本地历史）
