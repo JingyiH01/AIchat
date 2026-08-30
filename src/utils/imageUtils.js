@@ -40,9 +40,9 @@ export const convertImageToWebPBase64 = (file) => {
     const ctx = canvas.getContext('2d')//获取canvas的 2D 绘图上下文，以便在canvas上进行绘图操作。
 
     img.onload = () => {
-      // 压缩图片：限制最长边为 1024px，减小 base64 体积
-      // 面试考点：VLM 传大图会导致请求超时/回答中断，需在客户端先压缩
-      const MAX_SIDE = 1024
+      // 压缩图片：限制最长边为 768px，减小 base64 体积和 token 消耗
+      // 面试考点：VLM 图片会按像素换算成 token（约 宽/16 × 高/16），大图会撑爆上下文上限
+      const MAX_SIDE = 768
       let { width, height } = img
       if (Math.max(width, height) > MAX_SIDE) {
         const scale = MAX_SIDE / Math.max(width, height)

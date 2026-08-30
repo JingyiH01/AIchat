@@ -31,7 +31,8 @@ async function requestUpstream(payload, attempt = 1) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
-    const err = new Error(error?.error?.message || `上游 API 错误: ${response.status}`)
+    console.error('🔍 上游错误详情:', response.status, JSON.stringify(error).slice(0, 500)) // 临时调试日志
+    const err = new Error(error?.error?.message || error?.message || `上游 API 错误: ${response.status}`)
     err.status = response.status // 把上游错误码透传给前端
     throw err // Express 5 自动捕获 → 交给 errorHandler
   }
