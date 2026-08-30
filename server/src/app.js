@@ -10,9 +10,11 @@ import { errorHandler } from './middleware/errorHandler.js'
 
 const app = express()
 
-// CORS 白名单：只允许前端开发服务器访问，防止任何网站都能调我们的接口
+// CORS 白名单：只允许前端访问，防止任何网站都能调我们的接口
+// 本地默认 localhost:5173；部署时用环境变量 ALLOWED_ORIGINS 覆盖（逗号分隔）
 // 面试考点：为什么不能用 cors() 裸允许所有域名？
-const FRONTEND_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+const FRONTEND_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',').map(s => s.trim())
 app.use(cors({
   origin: FRONTEND_ORIGINS,
   allowedHeaders: ['Content-Type', 'Authorization'],

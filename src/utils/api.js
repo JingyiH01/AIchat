@@ -1,9 +1,9 @@
 // API 客户端：所有 AI 请求走后端 BFF 层（不再直连 SiliconFlow）
 // 面试考点：浏览器不再接触 API Key，Key 只在服务端环境变量里
 import { useSettingsStore } from '../stores/settings'
+import { API_BASE_URL } from '../config'
 
-// 后端服务地址（不是 SiliconFlow！）
-const API_BASE_URL = 'http://localhost:3000'
+// 认证头：带登录拿到的 JWT（存在 localStorage）
 
 // 认证头：带登录拿到的 JWT（存在 localStorage）
 const createHeaders = (stream = false) => {

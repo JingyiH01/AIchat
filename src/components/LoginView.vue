@@ -34,6 +34,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
 const router = useRouter()
 const password = ref('')
@@ -48,7 +49,7 @@ const handleLogin = async () => {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.post('http://localhost:3000/api/auth/login', {
+    const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
       password: password.value,
     })
     // 把 token 存 localStorage，后续所有请求带上

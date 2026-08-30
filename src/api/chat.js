@@ -1,9 +1,7 @@
 // 后端 Node.js 会话持久化接口
 // 作用：把对话记录存到 MySQL，刷新页面后从数据库恢复历史
 import axios from 'axios'
-
-// 后端 Node.js 服务地址（和 server 里的 PORT 一致，默认 3000）
-const BASE_URL = 'http://localhost:3000'
+import { API_BASE_URL as BASE_URL } from '../config'
 
 // axios 拦截器：每次请求自动带上 JWT，无需每个函数手动加
 // 面试考点：拦截器（interceptor）统一处理请求/响应，适合做鉴权、日志、统一错误
