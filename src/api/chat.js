@@ -37,3 +37,9 @@ export const getConversationDetail = async (conversationId) => {
   const res = await http.get(`/api/conversations/${conversationId}`)
   return res.data.data // { id, title, messages: [] }
 }
+
+// 删除某个会话（后端级联删除其所有消息）
+export const deleteConversation = async (conversationId) => {
+  const res = await http.delete(`/api/conversations/${conversationId}`)
+  return res.data
+}

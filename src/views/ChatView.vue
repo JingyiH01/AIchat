@@ -46,7 +46,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { Setting } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
 import { chatApi } from '../utils/api'
-import { createConversation, addMessage, getConversations, getConversationDetail } from '../api/chat'
+import { createConversation, addMessage, getConversations, getConversationDetail, deleteConversation } from '../api/chat'
 import { messageHandler } from '../utils/messageHandler'
 import ChatMessage from '../components/ChatMessage.vue'
 import ChatInput from '../components/ChatInput.vue'
@@ -224,9 +224,17 @@ const handleSend = async (content) => {
 /**
  * 清除消息处理函数
  */
-const handleClear = () => {
+const handleClear = async () => {
+    // 删除数据库里的当前会话（后端级联删消息），否则刷新后历史又恢复
+    if (chatStore.conversationId) {
+        try {
+            await deleteConversation(chatStore.conversationId)
+        } catch (e) {
+            console.warn('删除会话失败:', e.message)
+        }
+    }
     chatStore.clearMessages()
-    chatStore.setConversationId(null) // 清空后开新会话，而不是继续追加旧会话
+    chatStore.setConversationId(null) // 清空后开新会话
 }
 
 // 页面加载时：从数据库恢复最近一次会话的历史（后端没启动则静默，继续用本地历史）
