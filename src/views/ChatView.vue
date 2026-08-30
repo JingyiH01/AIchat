@@ -130,7 +130,9 @@ const handleSend = async (content) => {
         const messagesToSend = []
         
         // 当前消息是否含图片（VLM）
-        const isVLMContent = typeof content === 'object' && content.images && content.images.length > 0
+        // buildVLMMessage 返回 { role:'user', content: [{type:'image_url'},{type:'text'}] }，content 是数组即多模态
+        const isVLMContent = typeof content === 'object' && Array.isArray(content.content)
+          && content.content.some(part => part.type === 'image_url')
 
         // VLM 传图时用干净上下文：只发当前这条图文消息，忽略历史
         // 原因：① 避免历史里的 VLM user 消息与当前形成连续 user（报错）
