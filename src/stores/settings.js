@@ -23,8 +23,8 @@ export const useSettingsStore = defineStore('settings', {
         temperature: 0.7,
         // 模型生成的最大Token数量，控制回复的长度，默认值为 1000
         maxTokens: 1000,
-        // 使用的模型名称，默认为 'deepseek-ai/DeepSeek-V4-Flash'（免费可用）
-        model: 'deepseek-ai/DeepSeek-V4-Flash',
+        // 使用的模型名称，默认为 'Qwen/Qwen2.5-7B-Instruct'（非推理模型，响应快，适合演示）
+        model: 'Qwen/Qwen2.5-7B-Instruct',
         // API 密钥，默认为空字符串
         apiKey: '',
         // 是否启用流式响应，默认为 true
