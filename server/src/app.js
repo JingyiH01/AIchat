@@ -3,12 +3,22 @@ import express from 'express'
 import cors from 'cors'
 import chatRouter from './routes/chat.js'
 import conversationRouter from './routes/conversation.js'
+import authRouter from './routes/auth.js'
+import { rateLimiter } from './middleware/rateLimit.js'
+import { authMiddleware } from './middleware/auth.js'
 import { errorHandler } from './middleware/errorHandler.js'
 
 const app = express()
 
+// CORS 白名单：只允许前端开发服务器访问，防止任何网站都能调我们的接口
+// 面试考点：为什么不能用 cors() 裸允许所有域名？
+const FRONTEND_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173']
+app.use(cors({
+  origin: FRONTEND_ORIGINS,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
 // ===== 全局中间件（洋葱外层）=====
-app.use(cors())                                  // 允许前端跨域访问
 app.use(express.json({ limit: '10mb' }))         // 解析 JSON 请求体（限制 10MB，防超大 body）
 
 // 请求日志中间件 —— 用洋葱模型"回程"计时
@@ -26,7 +36,9 @@ app.get('/api/health', (req, res) => {
   res.json({ code: 0, msg: 'ok', data: { time: Date.now() } })
 })
 
-app.use('/api/chat', chatRouter) // AI 对话代理
+// 鉴权分级：登录接口开放；AI 对话接口 限流 + 鉴权；会话接口暂开放（D4 加鉴权）
+app.use('/api/auth', authRouter) // 登录
+app.use('/api/chat', authMiddleware, rateLimiter, chatRouter) // AI 对话代理（先鉴权再限流）
 app.use('/api/conversations', conversationRouter) // 会话持久化
 
 // ===== 404 兜底 =====
