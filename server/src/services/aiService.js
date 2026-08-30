@@ -2,8 +2,16 @@
 const API_KEY = process.env.SILICONFLOW_API_KEY
 const BASE_URL = process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1'
 
+const MAX_RETRY = 2 // 最多重试次数
+const RETRY_DELAY_MS = 500 // 基础退避时间
+
+// 判断该状态码是否值得重试（临时性错误）
+// 429=限流，5xx=服务端临时故障；4xx 业务错误（如 400 参数错误）不重试
+const isRetryable = (status) => status === 429 || status >= 500
+
 // 请求上游的公共逻辑（流式/非流式共用）
-async function requestUpstream(payload) {
+// 面试考点：第三方 API 偶发故障时自动重试（指数退避），比直接甩错误给用户健壮
+async function requestUpstream(payload, attempt = 1) {
   const response = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -12,6 +20,14 @@ async function requestUpstream(payload) {
     },
     body: JSON.stringify(payload),
   })
+
+  // 临时性错误（限流/5xx）且未达重试上限 → 退避后重试
+  if (isRetryable(response.status) && attempt <= MAX_RETRY) {
+    const delay = RETRY_DELAY_MS * 2 ** (attempt - 1) // 指数退避：500ms, 1000ms
+    console.warn(`上游返回 ${response.status}，${delay}ms 后重试 (第 ${attempt} 次)`)
+    await new Promise((r) => setTimeout(r, delay))
+    return requestUpstream(payload, attempt + 1)
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => null)
