@@ -268,8 +268,8 @@ const handleSend = async () => {
   try {
     let messageContent
     
-    // 如果是VLM模型且有图片文件，使用VLM消息格式
-    if (isVLMModel.value && selectedFiles.value.some(file => isImage(file))) {
+    // 只要选了图片，就使用 VLM 多模态格式（图片不能塞进文本，否则 base64 撑爆上下文）
+    if (selectedFiles.value.some(file => isImage(file))) {
       // 限制图片数量：图片转 token 开销大（一张 768px 图约 2300 token），多张会撑爆上下文
       // 面试考点：VLM 图片按像素换算 token，需控制图片数量和大小
       const MAX_IMAGES = 2
@@ -278,7 +278,7 @@ const handleSend = async () => {
         ElMessage.warning(`最多支持 ${MAX_IMAGES} 张图片，已忽略多余的`)
       }
       const textFiles = selectedFiles.value.filter(file => !isImage(file))
-      
+
       // 处理文本文件内容
       let textContent = messageText.value
       if (textFiles.length > 0) {
@@ -287,30 +287,24 @@ const handleSend = async () => {
         )
         textContent = textContent + '\n' + fileContents.join('\n')
       }
-      
-      // 构建VLM消息
+
+      // 构建VLM消息（标准多模态格式：image_url + text）
       messageContent = await buildVLMMessage(
-        textContent, 
-        imageFiles, 
+        textContent,
+        imageFiles,
         settingsStore.imageDetail
       )
     } else {
-      // 传统文本模式
+      // 传统文本模式（无图片）
       const fileContents = await Promise.all(
-        selectedFiles.value.map(async (file) => {
-          if (isImage(file)) {
-            return await convertImageToBase64(file)
-          } else {
-            return await readFileContent(file)
-          }
-        })
+        selectedFiles.value.map(file => readFileContent(file))
       )
 
       let content = messageText.value
       if (fileContents.length > 0) {
         content = content + '\n' + fileContents.join('\n')
       }
-      
+
       messageContent = content
     }
 
