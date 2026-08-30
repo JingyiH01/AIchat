@@ -517,16 +517,21 @@ const handleCopyAll = async () => {
   }
 
   .markdown-body {
+    // 关键：Markdown 内容用 normal 换行，让 Markdown 结构（p、换行）控制间距，
+    // 不被外层 .message-text 的 white-space:pre-wrap 把 \n 也渲染成换行（导致双重空白行）
+    white-space: normal;
+    line-height: 1.6; // 正文行高，阅读舒适
+
     :deep() {
       // Markdown 内容样式
       h1, h2, h3, h4, h5, h6 {
-        margin: 0.3rem 0;
+        margin: 0.4rem 0;
         font-weight: 600;
         line-height: 1.25;
       }
 
       p {
-        margin: 0.15rem 0;
+        margin: 0.3rem 0; // 段落间距适度，不再双重空白
       }
 
       code {
@@ -681,7 +686,9 @@ const handleCopyAll = async () => {
   padding: 0.8rem;
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  white-space: pre-wrap;// 保留换行和空格（比如用户输入的换行，AI 回复的代码换行）
+  // 用 pre-wrap 保留用户输入的换行；但 AI 的 Markdown 内容由 .markdown-body 控制间距
+  // 避免 Markdown 的 \n 和 <p> 双重产生空白行
+  white-space: pre-wrap;
   transition: all 0.3s ease;
   
   // 深色模式下增强阴影效果
