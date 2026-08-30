@@ -194,12 +194,12 @@ const props = defineProps({
 })
 
 // 加载提示文案：根据当前模型是否推理模型，显示不同提示
-// 推理模型（如 DeepSeek-V4-Flash）会先"思考"，提示"正在推理"；普通模型提示"正在生成"
+// 推理模型（如 DeepSeek-V4-Flash）会先"思考"，提示"正在推理"并说明原因；普通模型提示"正在生成"
 const settingsStore = useSettingsStore()
 const loadingText = computed(() => {
     const model = settingsStore.model || ''
     const isReasoningModel = model.includes('DeepSeek-V4-Flash') || model.includes('R1')
-    return isReasoningModel ? '正在推理中' : '正在生成'
+    return isReasoningModel ? '正在推理中 · 此模型会先思考再作答' : '正在生成'
 })
 
 // 定义自定义事件（defineEmits）
