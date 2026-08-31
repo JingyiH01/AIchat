@@ -319,16 +319,23 @@ const handleSend = async () => {
       )
     } else {
       // 传统文本模式（无图片）
+      const textFiles = selectedFiles.value
       const fileContents = await Promise.all(
-        selectedFiles.value.map(file => readFileContent(file))
+        textFiles.map(file => readFileContent(file))
       )
 
-      let content = messageText.value
-      if (fileContents.length > 0) {
-        content = content + '\n' + fileContents.join('\n')
+      if (textFiles.length > 0) {
+        // 有文本文件：展示精简，但发给 AI 的是完整文件内容
+        // displayContent：界面只显示用户输入 + 文件名提示（不占位置）
+        // apiContent：AI 实际收到的完整内容（用户输入 + 所有文件全文）
+        const displayContent = messageText.value + '\n\n' +
+          '📄 已上传文件：' + textFiles.map(f => f.name).join('、')
+        const apiContent = messageText.value + '\n\n' +
+          fileContents.map((c, i) => `【文件 ${textFiles[i].name}】\n${c}`).join('\n\n')
+        messageContent = { role: 'user', displayContent, apiContent }
+      } else {
+        messageContent = messageText.value
       }
-
-      messageContent = content
     }
 
     emit('send', messageContent)

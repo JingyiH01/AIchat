@@ -72,13 +72,18 @@ const messagesContainer = ref(null)
 // 注意：VLM 图片消息只存文本部分，base64 图片体积过大不适合进数据库
 const extractText = (content) => {
     if (typeof content === 'string') return content
-    if (content && typeof content === 'object' && content.text) return content.text
+    if (content && typeof content === 'object') {
+        // 文本文件场景：优先取 apiContent（完整内容），保证持久化的是 AI 实际收到的
+        if (content.apiContent) return content.apiContent
+        if (content.text) return content.text
+    }
     return ''
 }
 
 // 把用户消息持久化到 MySQL：首次发送自动创建会话，之后追加到当前会话
+// 存 displayContent（精简版），避免刷新后整份文件内容又占满屏幕
 const persistUserMessage = async (content) => {
-    const text = extractText(content)
+    const text = content?.displayContent ?? extractText(content)
     if (!text) return
     if (!chatStore.conversationId) {
         const title = text.slice(0, 20) || '新对话'
@@ -117,7 +122,9 @@ const handleSend = async (content) => {
     // 状态更新：
     // 调用 chatStore.addMessage 添加两条消息：用户消息（内容为 content）和一个空的 AI 回复（占位，等待后续更新）。
     // 设置 chatStore.isLoading = true，触发加载状态（输入框禁用、显示加载动画）。
-    chatStore.addMessage(messageHandler.formatMessage('user', content))
+    // 展示用 displayContent（文本文件场景下是精简提示，避免整份文件占满屏幕）
+    const displayContent = content?.displayContent ?? content
+    chatStore.addMessage(messageHandler.formatMessage('user', displayContent))
     // assistant 空消息 loading:true → 立即显示动态加载动画，不等模型首 token
     chatStore.addMessage({ ...messageHandler.formatMessage('assistant', ''), loading: true })
     chatStore.isLoading = true
@@ -182,7 +189,12 @@ const handleSend = async (content) => {
         
         // 添加当前用户消息
         if (typeof content === 'object' && content.role === 'user') {
-            messagesToSend.push(content)
+            // 文本文件场景：发给 AI 的用 apiContent（完整文件内容），而不是展示的精简版
+            if (content.apiContent !== undefined) {
+                messagesToSend.push({ role: 'user', content: content.apiContent })
+            } else {
+                messagesToSend.push(content) // VLM 多模态格式原样发送
+            }
         } else {
             messagesToSend.push({
                 role: 'user',
