@@ -153,8 +153,14 @@ const handleSend = async (content) => {
         // 原因：① 避免历史里的 VLM user 消息与当前形成连续 user（报错）
         //      ② 图片 token 开销大，带历史会撑爆上下文上限
         if (!isVLMContent) {
+          // 文本文件消息：历史里已有的"显示版"user 消息（displayContent）不应再进 API，
+          // 否则会和末尾追加的"完整版"形成连续 user（上游报错）。
+          // messages.value 末尾是空的 assistant 占位，倒数第二个是当前显示版 user 消息
+          const historyLimit = content?.apiContent !== undefined
+            ? messages.value.length - 2
+            : messages.value.length - 1
           // 处理历史消息
-          for (let i = 0; i < messages.value.length - 1; i++) {
+          for (let i = 0; i < historyLimit; i++) {
             const msg = messages.value[i]
             if (msg.role === 'user' && typeof msg.content === 'object' && msg.content.text !== undefined) {
                 // 这是一个VLM格式的消息，需要重构为API格式
