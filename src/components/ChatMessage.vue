@@ -42,29 +42,6 @@
         <div v-else class="markdown-body" v-html="renderedContent" ref="markdownBody" @click="handleCodeBlockClick"></div>
       </div>
 
-      <!-- 已上传文件：点击查看内容 -->
-      <div class="message-files" v-if="message.files && message.files.length">
-        <span
-          v-for="(f, i) in message.files"
-          :key="i"
-          class="file-chip"
-          @click="viewFile(f)"
-        >
-          <el-icon><Document /></el-icon>
-          {{ f.name }}
-        </span>
-      </div>
-
-      <!-- 文件内容查看弹窗 -->
-      <el-dialog
-        v-model="fileDialogVisible"
-        :title="currentFile?.name || '文件内容'"
-        width="70%"
-        top="5vh"
-      >
-        <pre class="file-content-preview">{{ currentFile?.content }}</pre>
-      </el-dialog>
-
       <!-- 编辑模式 -->
       <div class="message-edit" v-if="isEditing">
         <!-- 文本编辑框 -->
@@ -215,14 +192,6 @@ const props = defineProps({
     default: false
   }
 })
-
-// 文件内容查看：点击文件名弹出内容
-const fileDialogVisible = ref(false)
-const currentFile = ref(null)
-const viewFile = (file) => {
-  currentFile.value = file
-  fileDialogVisible.value = true
-}
 
 // 加载提示文案：根据当前模型是否推理模型，显示不同提示
 // 推理模型（如 DeepSeek-V4-Flash）会先"思考"，提示"正在推理"并说明原因；普通模型提示"正在生成"
@@ -709,44 +678,6 @@ const handleCopyAll = async () => {
   flex-direction: column; // 垂直布局：文本在上，底部时间/按钮在下
   gap: 0.25rem; // 文本和底部区域的间距
   max-width: 80%;// 内容最大宽度 80%（避免消息太宽，手机上也美观）
-}
-
-// 已上传文件 chip 样式
-.message-files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-
-  .file-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.6rem;
-    font-size: 0.85rem;
-    background-color: var(--bg-color-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
-  }
-}
-
-// 文件内容预览
-.file-content-preview {
-  max-height: 60vh;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-size: 0.85rem;
-  background-color: var(--bg-color-secondary);
-  padding: 1rem;
-  border-radius: var(--border-radius);
 }
 
 //消息文本框

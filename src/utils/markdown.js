@@ -11,7 +11,9 @@ const md = new MarkdownIt({
   // linkify: true：自动检测文本中的 URL（如 https://example.com）或邮箱（如 a@b.com），并将其转换为 <a href="..."> 链接。
   // typographer: true：启用排版优化，例如将 "" 转换为 “”（弯引号）、... 转换为 …（省略号），提升文本可读性。
   html: true,          // 允许解析 HTML 标签
-  linkify: true,       // 自动识别并转换链接（如网址、邮箱）为 <a> 标签
+  // linkify 已关闭：它会把 "xxx.md" 这类文本误识别成链接（把 .md 当域名后缀），
+  // 导致点击文件名跳转到不存在的页面。URL 无法自动识别可接受。
+  linkify: false,
   typographer: true,   // 启用排版优化（如替换引号为弯引号、处理省略号等）
   highlight: function (str, lang) {
   // str: 代码块的文本内容
