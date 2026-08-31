@@ -205,22 +205,33 @@ const toggleUpload = () => {
 // 处理文件选择
 // 格式过滤：若当前为 VLM 模型（支持图片的模型），通过 isValidImageFormat 过滤非图片文件（仅允许 JPEG/PNG/GIF/WebP）。
 // 大小验证：通过 checkImageSize 确保图片不超过 10MB。
+// 数量限制：图片转 token 开销大，最多 4 张，超出直接拒绝。
 // 状态更新：将合法文件存入 selectedFiles，并为图片生成预览 URL 存入 previewUrls（使用 getImagePreviewUrl 创建临时 URL）。
+const MAX_IMAGES = 4
 const handleFileChange = (file) => {
   // 如果是VLM模型，只允许图片文件
   if (isVLMModel.value && !isValidImageFormat(file.raw)) {
     ElMessage.error('当前模型只支持图片文件')
     return
   }
-  
+
   // 检查图片大小
   if (isValidImageFormat(file.raw) && !checkImageSize(file.raw)) {
     ElMessage.error('图片文件过大，请选择小于10MB的图片')
     return
   }
-  
+
+  // 图片数量限制：选择时就拦截，避免发送时才截断
+  if (isImage(file.raw)) {
+    const currentImages = selectedFiles.value.filter(f => isImage(f)).length
+    if (currentImages >= MAX_IMAGES) {
+      ElMessage.warning(`最多支持 ${MAX_IMAGES} 张图片`)
+      return
+    }
+  }
+
   selectedFiles.value.push(file.raw)
-  
+
   // 为图片创建预览URL
   // 在前端开发中，getImagePreviewUrl 通常是一个用于生成图片预览地址的工具函数，核心作用是让用户在上传图片文件
   // （如通过 <input type="file"> 选择本地图片）后，无需先上传到服务器，就能在浏览器中实时预览图片。
@@ -270,13 +281,8 @@ const handleSend = async () => {
     
     // 只要选了图片，就使用 VLM 多模态格式（图片不能塞进文本，否则 base64 撑爆上下文）
     if (selectedFiles.value.some(file => isImage(file))) {
-      // 限制图片数量：图片转 token 开销大（一张 768px 图约 2300 token），多张会撑爆上下文
-      // 面试考点：VLM 图片按像素换算 token，需控制图片数量和大小
-      const MAX_IMAGES = 2
+      // 图片数量限制在 handleFileChange 已拦截，这里只用顶层 MAX_IMAGES 兜底
       const imageFiles = selectedFiles.value.filter(file => isImage(file)).slice(0, MAX_IMAGES)
-      if (selectedFiles.value.filter(file => isImage(file)).length > MAX_IMAGES) {
-        ElMessage.warning(`最多支持 ${MAX_IMAGES} 张图片，已忽略多余的`)
-      }
       const textFiles = selectedFiles.value.filter(file => !isImage(file))
 
       // 处理文本文件内容
