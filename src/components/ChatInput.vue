@@ -328,11 +328,18 @@ const handleSend = async () => {
         // 有文本文件：展示精简，但发给 AI 的是完整文件内容
         // displayContent：界面只显示用户输入 + 文件名提示（不占位置）
         // apiContent：AI 实际收到的完整内容（用户输入 + 所有文件全文）
+        // fileNames/fileContents：供前端"点击查看文件详情"使用
         const displayContent = messageText.value + '\n\n' +
           '📄 已上传文件：' + textFiles.map(f => f.name).join('、')
         const apiContent = messageText.value + '\n\n' +
           fileContents.map((c, i) => `【文件 ${textFiles[i].name}】\n${c}`).join('\n\n')
-        messageContent = { role: 'user', displayContent, apiContent }
+        messageContent = {
+          role: 'user',
+          displayContent,
+          apiContent,
+          fileNames: textFiles.map(f => f.name),
+          fileContents,
+        }
       } else {
         messageContent = messageText.value
       }

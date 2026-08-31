@@ -124,7 +124,15 @@ const handleSend = async (content) => {
     // 设置 chatStore.isLoading = true，触发加载状态（输入框禁用、显示加载动画）。
     // 展示用 displayContent（文本文件场景下是精简提示，避免整份文件占满屏幕）
     const displayContent = content?.displayContent ?? content
-    chatStore.addMessage(messageHandler.formatMessage('user', displayContent))
+    const userMsg = messageHandler.formatMessage('user', displayContent)
+    // 附带文件信息（点击文件名可查看内容）
+    if (content?.fileNames && content?.fileContents) {
+        userMsg.files = content.fileNames.map((name, i) => ({
+            name,
+            content: content.fileContents[i],
+        }))
+    }
+    chatStore.addMessage(userMsg)
     // assistant 空消息 loading:true → 立即显示动态加载动画，不等模型首 token
     chatStore.addMessage({ ...messageHandler.formatMessage('assistant', ''), loading: true })
     chatStore.isLoading = true
