@@ -67,11 +67,12 @@
 
       <!-- 按钮组 -->
       <div class="button-group">
-        <!-- 添加切换上传区域的按钮 -->
-        <el-tooltip content="上传文件" placement="top">
+        <!-- 添加切换上传区域的按钮（非VLM模型禁用） -->
+        <el-tooltip :content="isVLMModel ? '上传文件' : '当前模型不支持图片'" placement="top">
           <el-button
             circle
             :icon="Upload"
+            :disabled="!isVLMModel"
             @click="toggleUpload"
           />
         </el-tooltip>
@@ -126,7 +127,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { Delete, Position, Upload, Plus, Document } from '@element-plus/icons-vue'
 import { useChatStore } from '../stores/chat'
-import { useSettingsStore } from '../stores/settings'
+import { useSettingsStore, modelOptions } from '../stores/settings'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { 
   buildVLMMessage, 
@@ -170,11 +171,12 @@ Shift + Enter 换行`
 const tokenCount = computed(() => chatStore.tokenCount)
 
 // 计算属性：判断当前模型是否支持图片
-// 检查 settingsStore.model（当前选中的模型名称）是否包含以下关键词
+// 判断当前模型是否支持图片（VLM）
+// 用 settings.js 里 modelOptions 的 isVLM 标记判断（权威数据源），比字符串匹配准确
+// 例如：Qwen3-VL-32B、GLM-4.5V、Qwen3-Omni 都标记了 isVLM: true
 const isVLMModel = computed(() => {
-  return settingsStore.model.includes('VL') || 
-         settingsStore.model.includes('vision') || 
-         settingsStore.model.includes('Qwen2.5-VL')
+  const current = settingsStore.model
+  return modelOptions.some(m => m.value === current && m.isVLM)
 })
 
 // showUpload：布尔值响应式变量，控制上传区域的显示 / 隐藏（默认隐藏，通过 “上传文件” 按钮切换）。
@@ -206,6 +208,12 @@ const handleFileChange = (file) => {
   // 检查图片大小
   if (isValidImageFormat(file.raw) && !checkImageSize(file.raw)) {
     ElMessage.error('图片文件过大，请选择小于10MB的图片')
+    return
+  }
+
+  // 非 VLM 模型禁止上传图片（双保险，即使按钮被绕过也拦截）
+  if (isImage(file.raw) && !isVLMModel.value) {
+    ElMessage.error('当前模型不支持图片，请切换到支持图像的模型')
     return
   }
 
