@@ -35,21 +35,29 @@ export const chatApi = {
             top_k: settingsStore.topK,
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/chat`, {
-            method: 'POST',
-            headers: createHeaders(stream),
-            body: JSON.stringify(payload)
-        })
+        // 超时保护：非流式 30s、流式 120s 无响应则中止，避免按钮一直转圈
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), stream ? 120000 : 30000)
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: createHeaders(stream),
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            })
 
-        if (!response.ok) {
-            await handleError(response)
+            if (!response.ok) {
+                await handleError(response)
+            }
+
+            if (stream) {
+                return response // 流式：返回 Response 对象，由 messageHandler 解析 SSE
+            }
+
+            return await response.json()
+        } finally {
+            clearTimeout(timeout)
         }
-
-        if (stream) {
-            return response // 流式：返回 Response 对象，由 messageHandler 解析 SSE
-        }
-
-        return await response.json()
     },
 
     // 异步任务接口（保留签名，供兼容；走后端代理）

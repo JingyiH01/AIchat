@@ -29,7 +29,7 @@ const VLM_MODELS = new Set([
 // 面试考点：服务端对输入做健壮性兜底，防止前端状态残留导致上游报错
 function sanitizeMessages(messages, model) {
   const isVLM = VLM_MODELS.has(model)
-  return messages.map((msg) => {
+  const cleaned = messages.map((msg) => {
     // 消息内容是数组（OpenAI 多模态格式：[{type:'image_url'}, {type:'text'}]）
     if (Array.isArray(msg.content)) {
       // 非 VLM 模型：只保留 text 项
@@ -43,6 +43,20 @@ function sanitizeMessages(messages, model) {
     }
     return msg // 普通字符串消息原样返回
   })
+
+  // 合并连续的 user 消息（OpenAI 规范要求 user 之间必须隔 assistant）
+  // 防御：历史数据脏（之前 bug 残留连续 user）也不会导致上游 400
+  const result = []
+  for (const msg of cleaned) {
+    const last = result[result.length - 1]
+    if (msg.role === 'user' && last && last.role === 'user') {
+      // 两条连续 user 合并成一条，内容用换行连接
+      last.content = [last.content, msg.content].filter(Boolean).join('\n')
+    } else {
+      result.push({ ...msg })
+    }
+  }
+  return result
 }
 
 // POST /api/chat  前端把对话发过来，后端代理给 SiliconFlow
@@ -59,6 +73,7 @@ router.post('/', async (req, res) => {
 
   // 清洗消息：非 VLM 模型剥掉图片，防止历史残留图片消息导致 400
   const cleanMessages = sanitizeMessages(messages, model)
+  console.log('🔍 消息角色序列:', cleanMessages.map(m => m.role).join(' → '), '| model:', model) // 临时调试
 
   // 注入 system prompt：锚定模型身份，防止被历史对话里旧模型的角色自述带偏
   // 面试考点：system prompt 是最高优先级指令，用来固定模型人设、行为边界
