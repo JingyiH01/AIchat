@@ -3,62 +3,50 @@
   <div class="chat-input-container">
     <!-- 输入框和按钮的组合 -->
     <div class="input-wrapper">
-      <!-- 添加文件上传区域 -->
+      <!-- 添加文件上传区域（紧凑排版） -->
       <div class="upload-area" v-if="showUpload">
-        <!-- 上传提示（仅VLM模型显示） -->
+        <!-- 一行精简提示 -->
         <div class="upload-tip" v-if="isVLMModel">
-          <el-alert
-            title="图片上传提示"
-            type="info"
-            show-icon
-            :closable="false"
-          >
-            <template #default>
-              <p>当前模型支持图像识别，建议最多上传2张图片</p>
-              <p>支持格式：JPEG、PNG、GIF、WebP</p>
-              <p>图片大小：建议小于10MB</p>
-              <p>细节模式：{{ settingsStore.imageDetail === 'high' ? '高分辨率（消耗更多Token）' : settingsStore.imageDetail === 'low' ? '低分辨率（消耗较少Token）' : '自动选择' }}</p>
-            </template>
-          </el-alert>
+          <span>支持 JPEG/PNG/GIF/WebP，最多 4 张，每张 &lt;10MB</span>
         </div>
-        <!-- 在 el-upload 组件中，:accept 属性用于限制文件选择器可选择的文件类型，
-        其值是一个或多个 MIME 类型字符串或文件扩展名，多个值之间用逗号分隔。 -->
-        <!-- 上传组件 -->
-        <el-upload
-          class="upload-component"
-          :action="null" 
-          :auto-upload="false"
-          :on-change="handleFileChange"
-          :show-file-list="false"
-          :accept="isVLMModel ? 'image/*' : '*'"
-          multiple
-        >
-        <!-- trigger	触发文件选择框的内容 -->
-          <template #trigger>
-            <el-button type="primary" :icon="Plus">
-              {{ isVLMModel ? '添加图片' : '添加文件' }}
-            </el-button>
-          </template>
-        </el-upload>
-        
-        <!-- 预览区域 -->
-        <div class="preview-list" v-if="selectedFiles.length">
-          <div v-for="(file, index) in selectedFiles" :key="index" class="preview-item">
-            <!-- 图片预览 -->
-            <img v-if="isImage(file)" :src="getPreviewUrl(index)" class="preview-image"/>
-            <!-- 文件名预览 -->
-            <div v-else class="file-preview">
-              <el-icon><Document /></el-icon>
-              <span>{{ file.name }}</span>
+
+        <!-- 上传组件 + 预览区域 横排成一行 -->
+        <div class="upload-row">
+          <el-upload
+            class="upload-component"
+            :action="null"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            :show-file-list="false"
+            :accept="isVLMModel ? 'image/*' : '*'"
+            multiple
+          >
+            <template #trigger>
+              <el-button type="primary" :icon="Plus">
+                {{ isVLMModel ? '添加图片' : '添加文件' }}
+              </el-button>
+            </template>
+          </el-upload>
+
+          <!-- 预览区域：小缩略图横排 -->
+          <div class="preview-list" v-if="selectedFiles.length">
+            <div v-for="(file, index) in selectedFiles" :key="index" class="preview-item">
+              <!-- 图片预览 -->
+              <img v-if="isImage(file)" :src="getPreviewUrl(index)" class="preview-image"/>
+              <!-- 文件名预览 -->
+              <div v-else class="file-preview">
+                <el-icon><Document /></el-icon>
+                <span>{{ file.name }}</span>
+              </div>
+              <!-- 删除按钮 -->
+              <el-button
+                class="delete-btn"
+                type="danger"
+                :icon="Delete"
+                circle
+                @click="removeFile(index)"
+              />
             </div>
-            <!-- 删除按钮 -->
-            <el-button 
-              class="delete-btn" 
-              type="danger" 
-              :icon="Delete" 
-              circle
-              @click="removeFile(index)"
-            />
           </div>
         </div>
       </div>
@@ -467,40 +455,42 @@ const adjustHeight = () => {
 }
 
 .upload-area {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border: 2px dashed var(--border-color);
+  // 紧凑排版：小幅 padding，不占大量垂直空间
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--border-color);
   border-radius: var(--border-radius);
-  
-  .upload-tip {// 上传提示信息
-    margin-bottom: 1rem;
-    
-    :deep(.el-alert__content) {
-      p {
-        margin: 0.25rem 0;
-        font-size: 0.9rem;
-      }
-    }
+
+  .upload-tip {// 一行精简提示
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+    margin-bottom: 0.4rem;
   }
-  
+
+  .upload-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap; // 缩略图多时换行
+  }
+
   .preview-list {
     display: flex;
-    flex-wrap: wrap;// 超出换行
-    gap: 1rem;
-    margin-top: 1rem;
-    
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
     .preview-item {
       position: relative;
-      width: 100px;
-      height: 100px;
-      
+      width: 56px;      // 小缩略图
+      height: 56px;
+
       .preview-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: var(--border-radius);
       }
-      
+
       .file-preview {
         width: 100%;
         height: 100%;
@@ -510,14 +500,14 @@ const adjustHeight = () => {
         justify-content: center;
         background-color: var(--bg-color-secondary);
         border-radius: var(--border-radius);
-        
+
         .el-icon {
-          font-size: 2rem;
-          margin-bottom: 0.5rem;
+          font-size: 1.2rem;
+          margin-bottom: 0.2rem;
         }
-        
+
         span {
-          font-size: 0.8rem;
+          font-size: 0.6rem;
           text-align: center;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -525,13 +515,13 @@ const adjustHeight = () => {
           width: 90%;
         }
       }
-      
+
       .delete-btn {
         position: absolute;
-        top: -0.5rem;
-        right: -0.5rem;
-        padding: 0.25rem;
-        transform: scale(0.8);
+        top: -0.4rem;
+        right: -0.4rem;
+        padding: 0.15rem;
+        transform: scale(0.7);
       }
     }
   }
