@@ -1,10 +1,8 @@
 <template>
   <!-- 聊天输入容器 -->
   <div class="chat-input-container">
-    <!-- 输入框和按钮的组合 -->
-    <div class="input-wrapper">
-      <!-- 添加文件上传区域（紧凑排版） -->
-      <div class="upload-area" v-if="showUpload">
+    <!-- 添加文件上传区域（放在输入框上方，作为工具栏） -->
+    <div class="upload-area" v-if="showUpload">
         <!-- 一行精简提示 -->
         <div class="upload-tip" v-if="isVLMModel">
           <span>支持 JPEG/PNG/GIF/WebP，最多 4 张，每张 &lt;10MB</span>
@@ -51,6 +49,8 @@
         </div>
       </div>
 
+    <!-- 输入框和按钮的组合 -->
+    <div class="input-wrapper">
       <!-- 输入框 -->
       <el-input
         v-model="messageText"
@@ -64,7 +64,7 @@
         @input="adjustHeight"
         ref="inputRef"
       />
-      
+
       <!-- 按钮组 -->
       <div class="button-group">
         <!-- 添加切换上传区域的按钮 -->
