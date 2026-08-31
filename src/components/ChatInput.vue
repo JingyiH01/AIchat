@@ -4,8 +4,9 @@
     <!-- 添加文件上传区域（放在输入框上方，作为工具栏） -->
     <div class="upload-area" v-if="showUpload">
         <!-- 一行精简提示 -->
-        <div class="upload-tip" v-if="isVLMModel">
-          <span>支持 JPEG/PNG/GIF/WebP，最多 4 张，每张 &lt;10MB</span>
+        <div class="upload-tip">
+          <span v-if="isVLMModel">支持 JPEG/PNG/GIF/WebP，最多 4 张，每张 &lt;10MB</span>
+          <span v-else>支持文本文件（.txt/.md/代码等），图片需切换到 VLM 模型</span>
         </div>
 
         <!-- 上传组件 + 预览区域 横排成一行 -->
@@ -16,12 +17,12 @@
             :auto-upload="false"
             :on-change="handleFileChange"
             :show-file-list="false"
-            :accept="isVLMModel ? 'image/*' : '*'"
+            :accept="isVLMModel ? 'image/*' : '.txt,.md,.json,.js,.ts,.py,.html,.css,.sh,.xml'"
             multiple
           >
             <template #trigger>
               <el-button type="primary" :icon="Plus">
-                {{ isVLMModel ? '添加图片' : '添加文件' }}
+                {{ isVLMModel ? '添加图片' : '添加文本文件' }}
               </el-button>
             </template>
           </el-upload>
@@ -67,12 +68,11 @@
 
       <!-- 按钮组 -->
       <div class="button-group">
-        <!-- 添加切换上传区域的按钮（非VLM模型禁用） -->
-        <el-tooltip :content="isVLMModel ? '上传文件' : '当前模型不支持图片'" placement="top">
+        <!-- 添加切换上传区域的按钮（VLM模型传图，文本模型传文本文件） -->
+        <el-tooltip :content="isVLMModel ? '上传图片' : '上传文本文件'" placement="top">
           <el-button
             circle
             :icon="Upload"
-            :disabled="!isVLMModel"
             @click="toggleUpload"
           />
         </el-tooltip>
@@ -199,21 +199,25 @@ const toggleUpload = () => {
 // 状态更新：将合法文件存入 selectedFiles，并为图片生成预览 URL 存入 previewUrls（使用 getImagePreviewUrl 创建临时 URL）。
 const MAX_IMAGES = 4
 const handleFileChange = (file) => {
-  // 如果是VLM模型，只允许图片文件
-  if (isVLMModel.value && !isValidImageFormat(file.raw)) {
-    ElMessage.error('当前模型只支持图片文件')
+  // 非 VLM 模型禁止图片（双保险），但允许文本文件（.txt/.md/代码等）
+  if (isImage(file.raw) && !isVLMModel.value) {
+    ElMessage.error('当前模型不支持图片，请切换到支持图像的模型')
+    return
+  }
+
+  // VLM 模型只允许图片；文本模型只允许文本文件（不接收其他二进制）
+  if (isVLMModel.value && !isImage(file.raw)) {
+    ElMessage.error('当前 VLM 模型只支持图片文件')
+    return
+  }
+  if (!isVLMModel.value && !isTextFile(file.raw)) {
+    ElMessage.error('当前模型只支持文本文件（.txt/.md/代码等）')
     return
   }
 
   // 检查图片大小
-  if (isValidImageFormat(file.raw) && !checkImageSize(file.raw)) {
+  if (isImage(file.raw) && !checkImageSize(file.raw)) {
     ElMessage.error('图片文件过大，请选择小于10MB的图片')
-    return
-  }
-
-  // 非 VLM 模型禁止上传图片（双保险，即使按钮被绕过也拦截）
-  if (isImage(file.raw) && !isVLMModel.value) {
-    ElMessage.error('当前模型不支持图片，请切换到支持图像的模型')
     return
   }
 
@@ -255,6 +259,23 @@ const removeFile = (index) => {
 // 检查文件的 type 属性是否以 image/ 开头（如 image/jpeg、image/png）。
 const isImage = (file) => {
   return file.type.startsWith('image/')
+}
+
+// 判断是否为文本文件（文本模型可处理）
+// 支持：纯文本、Markdown、代码、JSON 等
+const isTextFile = (file) => {
+  const textTypes = [
+    'text/', // text/plain, text/markdown, text/javascript 等
+    'application/json',
+    'application/xml',
+    'application/javascript',
+    'application/x-sh', // shell 脚本
+    'application/x-python-code',
+  ]
+  if (textTypes.some(t => file.type.startsWith(t))) return true
+  // 兜底：常见文本扩展名（部分文件 type 为空）
+  const textExts = ['.txt', '.md', '.json', '.js', '.ts', '.py', '.html', '.css', '.sh', '.yaml', '.yml', '.xml']
+  return textExts.some(ext => file.name?.toLowerCase().endsWith(ext))
 }
 
 // 获取预览URL（使用缓存的URL）
